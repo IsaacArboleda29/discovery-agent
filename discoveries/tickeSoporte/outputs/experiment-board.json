@@ -1,0 +1,60 @@
+{
+  "discovery": "tickeSoporte",
+  "hypotheses": [
+    {
+      "id": "H-01",
+      "risk": "alto",
+      "assumption": "Los clientes abren y leen los mensajes de WhatsApp del negocio a tiempo (antes de que el técnico llegue); sin lectura, la notificación automática no comunica nada.",
+      "hypothesis": "Creemos que los clientes residenciales abrirán y leerán el mensaje automático de WhatsApp del negocio en los 30 minutos previos a la llegada del técnico, porque ya reciben la dirección del trabajo por ese mismo canal y porque dijeron en entrevista que ese aviso les resolvería el problema.",
+      "metric": "Tasa de apertura del mensaje automático (confirmación de lectura / visto bueno) respecto del total de mensajes enviados, medida por el proveedor de WhatsApp/SMS durante 2 semanas.",
+      "threshold": "≥ 70 % de los mensajes enviados quedan leídos (visto bueno o acuse equivalente) en los 30 minutos posteriores al envío, en una muestra de al menos 20 trabajos.",
+      "experiment": "Smoke test: durante 2 semanas, en lugar de enviar la notificación automática desde la herramienta, el gerente envía manualmente por WhatsApp Business el mismo texto que enviaría el sistema (nombre del técnico, hora estimada, nombre del negocio) en el momento del cambio de estado, y mide cuántas conversaciones quedan con visto bueno en ≤ 30 min. Si no se llega al umbral, no se ha construido nada que valga la pena.",
+      "time_box": "2 semanas · costo aproximado: 0 (solo tiempo del gerente para enviar el mensaje manualmente en lugar de pulsar un botón que aún no existe).",
+      "decision": "Si pasa (≥ 70 % abierto en ≤ 30 min) → perseverar: construir la automatización del envío, sabiendo que el canal funciona. Si falla (< 70 % abierto) → pivotar el canal: probar SMS con enlace a vista de estado (US-04) o cambiar el horario de envío; el problema no es la herramienta sino el canal elegido."
+    },
+    {
+      "id": "H-02",
+      "risk": "alto",
+      "assumption": "El técnico realmente pulsa el botón 'voy en camino' y 'se demoró' de forma consistente mientras trabaja con las manos ocupadas; si se olvida, no hay cambio de estado y por tanto no hay aviso.",
+      "hypothesis": "Creemos que el técnico pulsará el botón de estado con la frecuencia necesaria (al menos una vez por trabajo relevante) sin que se lo recuerden, porque el dolor de la llamada es suyo también y un toque es menos costoso que descolgar y redactar.",
+      "metric": "Tasa de trabajos del día en los que el técnico marca al menos un cambio de estado relevante (voy en camino / demorado) durante la semana de medición.",
+      "threshold": "≥ 80 % de los trabajos del día registran al menos un cambio de estado marcado por el técnico, en una muestra de al menos 15 trabajos seguidos durante 5 días.",
+      "experiment": "Mago de Oz: durante 5 días, el gerente lleva un papel con dos columnas ('voy en camino' / 'se demoró'). Cada vez que el técnico termina un trabajo, el gerente le manda un WhatsApp del tipo 'ya vas al siguiente?' y registra si el técnico responde con el estado. La pregunta es si el técnico mantiene el hábito sin herramienta; si lo hace con un recordatorio tan suave, lo hará con un botón. Mide frecuencia real, no intención declarada.",
+      "time_box": "5 días hábiles · costo: ~30 minutos/día del gerente (un recordatorio + un registro en papel). Sin código.",
+      "decision": "Si pasa (≥ 80 % de los trabajos marcados) → perseverar: construir el botón de un toque (US-01, US-02), el hábito se sostiene. Si falla (< 80 %) → pivotar el diseño: agregar un disparador automático (al cerrar el trabajo anterior, el sistema pregunta y propone el siguiente estado con un toque de confirmación) o investigar por qué se olvida (carga cognitiva, momento del día, etc.) antes de seguir construyendo."
+    },
+    {
+      "id": "H-03",
+      "risk": "medio",
+      "assumption": "La notificación llega al cliente en pocos minutos aunque la cobertura de red sea mala en la zona del trabajo del técnico; si se demora, llega cuando el cliente ya se fue y pierde utilidad.",
+      "hypothesis": "Creemos que el técnico podrá registrar el cambio de estado y el cliente lo recibirá en menos de 5 minutos aunque la red 4G/3G sea débil en el lugar del trabajo, porque la acción se encola localmente y el envío se hace cuando hay señal.",
+      "metric": "Latencia extremo a extremo: tiempo entre el momento en que el técnico marca el estado y el momento en que el mensaje aparece como entregado al cliente, en condiciones reales de campo (no en oficina).",
+      "threshold": "≥ 90 % de los cambios de estado se reflejan como mensaje entregado al cliente en ≤ 5 minutos, durante al menos 20 eventos medidos en condiciones reales (incluyendo trabajos en zonas con señal débil reportadas por el técnico).",
+      "experiment": "Prototipo evolutivo mínimo: durante 1 semana, una hoja de cálculo en la nube + un formulario web muy simple que el técnico abre desde el navegador del teléfono en el momento del cambio. Si no hay señal, lo deja escrito y la herramienta lo envía cuando detecta conexión. Mide la latencia real entre marca y entrega del mensaje al cliente. Si los 5 minutos se cumplen incluso en zonas reportadas como de señal débil, el supuesto se sostiene.",
+      "time_box": "1 semana · costo: 1 día del gerente para armar la hoja + 1 día para un formulario simple; el resto es uso real.",
+      "decision": "Si pasa (≥ 90 % en ≤ 5 min) → perseverar: implementar el envío automático y el manejo de cola. Si falla (< 90 %) → pivotar el mecanismo: evaluar un dispositivo intermedio (por ejemplo, un SIM de datos secundario) o forzar al técnico a marcar el estado al volver al vehículo/lugar con señal, antes de seguir."
+    },
+    {
+      "id": "H-04",
+      "risk": "medio",
+      "assumption": "El panel de estado diario es operable por quien ayude al gerente a contestar mensajes sin capacitación especial; sin esto, el gerente sigue siendo el cuello de botella y se duplica el problema.",
+      "hypothesis": "Creemos que una persona sin contexto previo (familiar, asistente, secretaria) podrá consultar y actualizar el estado de los trabajos del día en menos de 2 minutos por consulta, tras una explicación de 10 minutos, porque el panel muestra solo lo relevante (trabajo, dirección, estado actual).",
+      "metric": "Tiempo promedio por consulta correcta al panel (encontrar el estado actualizado de un trabajo) medido con cronómetro por el gerente observador.",
+      "threshold": "≥ 4 de 5 consultas se resuelven correctamente en ≤ 2 minutos, tras una sola explicación de 10 minutos, con una persona sin experiencia previa en el negocio.",
+      "experiment": "Mago de Oz con persona nueva: una vez al día durante 3 días, el gerente le muestra el panel (puede ser una hoja de cálculo compartida) a alguien que normalmente no contesta mensajes del negocio. Le explica 10 minutos cómo leer el estado de cada trabajo y luego le hace 5 preguntas reales del tipo '¿en qué estado está el trabajo de la calle X?'. Mide tiempo y acierto.",
+      "time_box": "3 días · costo: ~15 minutos del gerente por sesión + la cooperación de la persona que ayuda.",
+      "decision": "Si pasa (≥ 4/5 en ≤ 2 min) → perseverar: invertir en hacer el panel pulido y compartido (US-06). Si falla (< 4/5) → pivotar: o el panel muestra demasiada información (reducir a lo mínimo) o requiere que la persona tenga contexto del cliente; en ese caso, replantear si esta historia entra al MVP o se atiende con un canal más simple (mensaje directo al gerente)."
+    },
+    {
+      "id": "H-05",
+      "risk": "alto",
+      "assumption": "El aviso automático cambia el comportamiento del cliente (deja de llamar, deja de irse) y por tanto protege al negocio de la pérdida de clientes y reputación declarada por el gerente; sin cambio de comportamiento, la métrica de avisos enviados no se traduce en impact.",
+      "hypothesis": "Creemos que los clientes que reciban el aviso automático antes de la llegada del técnico llamarán menos para preguntar por el estado y no se irán del lugar de espera, porque dijeron en entrevista que el aviso por sí solo les permite planificar y dejar de interrumpir.",
+      "metric": "Tasa de clientes que llaman para preguntar por el estado en el día del trabajo, comparando grupo que recibió aviso automático vs. grupo que no lo recibió.",
+      "threshold": "Reducción de al menos 50 % en la tasa de llamadas de clientes preguntando por el estado (de una línea base a medir en los primeros 10 trabajos sin aviso) en los siguientes 10 trabajos con aviso automático enviado a tiempo.",
+      "experiment": "A/B cuasi-experimental: durante 2 semanas, en días alternos, el gerente envía (o no envía) el aviso manualmente como en H-01, pero esta vez registra además cuántas llamadas recibe preguntando por el estado ese día. La métrica es la diferencia de llamadas entre días con aviso y días sin aviso, no la cantidad de avisos enviados.",
+      "time_box": "2 semanas · costo: el mismo que H-01 (envío manual) + 5 minutos/día para registrar las llamadas entrantes que preguntan por estado.",
+      "decision": "Si pasa (≥ 50 % de reducción de llamadas) → perseverar: la cadena output→outcome está validada, construir el MVP. Si falla (< 50 % de reducción) → reevaluar: el aviso puede llegar pero no cambiar comportamiento; en ese caso, explorar si el contenido del mensaje es insuficiente (falta la hora estimada concreta, falta el nombre del técnico) antes de seguir construyendo sobre esta hipótesis."
+    }
+  ]
+}
